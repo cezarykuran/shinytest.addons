@@ -1,0 +1,76 @@
+testPlotly <- function(
+    app,
+    id,
+    data,
+    interval = 1000,
+    timeout = 30000
+  ) {
+
+  stopifnot(
+    inherits(app, "ShinyDriver"),
+    checkmate::test_string(id, min.chars = 1),
+    is.list(data)
+  )
+
+  expr <- paste0(
+    "'", toString(jsonlite::toJSON(data, auto_unbox = TRUE)), "'",
+    "==",
+    "JSON.stringify(",
+      "document.getElementById('", id, "')",
+        ".data",
+        #".map(function(p){return {x:p.x,y:p.y,marker:p.marker}})",
+        ".map(function(p){return {x:p.x,y:p.y}})",
+    ")"
+  )
+  app$waitFor(expr, interval = interval, timeout = timeout)
+}
+
+testDT <- function(
+    app,
+    id,
+    row,
+    col,
+    data,
+    regex = FALSE,
+    interval = 1000,
+    timeout = 30000
+  ) {
+
+  f <- 
+    if ("ShinyDriver" %in% class(app)) {
+      function(js) app$waitFor(expr = js, checkInterval = interval, timeout = timeout)
+    }
+    else if ("AppDriver" %in% class(app)) {
+      function(js) app$wait_for_js(script = js, timeout = timeout, interval = interval)
+    }
+    else stop("Unknown class of `app`")
+
+  stopifnot(
+    checkmate::test_string(id, min.chars = 1),
+    checkmate::test_numeric(row, lower = 0, min.len = 1),
+    checkmate::test_numeric(col, lower = 0, min.len = 1),
+    is.matrix(data),
+    length(row) == NROW(data),
+    length(col) == NCOL(data),
+    checkmate::test_flag(regex)
+  )
+
+  js <- paste0(
+    "(function(){",
+      "ref=", toString(jsonlite::toJSON(data, auto_unbox = TRUE)), ";",
+      "ret=1;",
+      "$('#", id, " table > tbody > tr')",
+      ".filter(function(i) {return $.inArray(i,[", paste0(row, collapse = ","),"])!=-1})",
+      ".each(function(r){",
+        "$(this).children()",
+            ".filter(function(i) {return $.inArray(i,[", paste0(col, collapse = ","),"])!=-1})",
+            ".each(function(c){",
+                "ret &= $(this).text()", ifelse(regex, ".match(ref[c][r]) !== null", "==ref[c][r]"), ";",
+            "});",
+      "});",
+      "return ret",
+    "})()"
+  )
+  message(js)
+  f(js)
+}

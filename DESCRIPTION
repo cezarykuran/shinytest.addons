@@ -1,0 +1,13 @@
+Package: shinytest.addons
+Type: Package
+Title: Set of helper functions for application testing with shinytest/shinytest2
+Version: 0.1.0
+Author: Cezary Kuran
+Maintainer: Cezary Kuran <cezary.kuran@gmail.com>
+Description: Set of helper functions for application testing with shinytest/shinytest2
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Imports: checkmate, jsonlite
+Suggests: shinytest, shinytest2
+RoxygenNote: 7.1.2
